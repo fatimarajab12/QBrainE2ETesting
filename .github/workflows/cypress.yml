@@ -38,23 +38,39 @@ jobs:
           token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
         continue-on-error: true
 
+      # Check if QBrain checkout succeeded
+      - name: Verify QBrain checkout
+        id: verify-checkout
+        run: |
+          if [ -d "qbrain" ] && [ -d "qbrain/backend" ] && [ -d "qbrain/frontend" ]; then
+            echo "qbrain_available=true" >> $GITHUB_OUTPUT
+            echo "✅ QBrain repository checkout successful"
+          else
+            echo "qbrain_available=false" >> $GITHUB_OUTPUT
+            echo "⚠️ QBrain repository checkout failed - will use external URLs if configured"
+            echo "This is OK if you're using external servers or if the repository is private"
+          fi
+        continue-on-error: true
+
       # Setup and start Backend
       - name: Setup Backend
         id: setup-backend
         run: |
-          if [ ! -d "qbrain/backend" ] || [ ! -f "qbrain/backend/package.json" ]; then
+          if [ "${{ steps.verify-checkout.outputs.qbrain_available }}" != "true" ] || [ ! -d "qbrain/backend" ] || [ ! -f "qbrain/backend/package.json" ]; then
             echo "backend_available=false" >> $GITHUB_OUTPUT
-            echo "Backend not available - QBrain repository checkout may have failed"
-            echo "This is OK if you're using external servers"
+            echo "⚠️ Backend not available - QBrain repository checkout failed or not found"
+            echo "ℹ️ Will use external API URL if CYPRESS_API_BASE_URL is configured"
             exit 0
           fi
           cd qbrain/backend
           if [ -f "package.json" ]; then
+            echo "📦 Installing backend dependencies..."
             npm ci
             echo "backend_available=true" >> $GITHUB_OUTPUT
+            echo "✅ Backend setup successful"
           else
             echo "backend_available=false" >> $GITHUB_OUTPUT
-            echo "Backend package.json not found"
+            echo "❌ Backend package.json not found"
           fi
         continue-on-error: true
 
@@ -78,19 +94,21 @@ jobs:
       - name: Setup Frontend
         id: setup-frontend
         run: |
-          if [ ! -d "qbrain/frontend" ] || [ ! -f "qbrain/frontend/package.json" ]; then
+          if [ "${{ steps.verify-checkout.outputs.qbrain_available }}" != "true" ] || [ ! -d "qbrain/frontend" ] || [ ! -f "qbrain/frontend/package.json" ]; then
             echo "frontend_available=false" >> $GITHUB_OUTPUT
-            echo "Frontend not available - QBrain repository checkout may have failed"
-            echo "This is OK if you're using external servers"
+            echo "⚠️ Frontend not available - QBrain repository checkout failed or not found"
+            echo "ℹ️ Will use external Frontend URL if CYPRESS_BASE_URL is configured"
             exit 0
           fi
           cd qbrain/frontend
           if [ -f "package.json" ]; then
+            echo "📦 Installing frontend dependencies..."
             npm ci
             echo "frontend_available=true" >> $GITHUB_OUTPUT
+            echo "✅ Frontend setup successful"
           else
             echo "frontend_available=false" >> $GITHUB_OUTPUT
-            echo "Frontend package.json not found"
+            echo "❌ Frontend package.json not found"
           fi
         continue-on-error: true
 
@@ -138,10 +156,11 @@ jobs:
 
       # Run Cypress tests
       - name: Run Cypress tests
+        if: steps.setup-frontend.outputs.frontend_available == 'true' || steps.setup-backend.outputs.backend_available == 'true' || secrets.CYPRESS_BASE_URL != ''
         uses: cypress-io/github-action@v6
         with:
           install: false
-          wait-on: 'http://localhost:8080'
+          wait-on: '${{ steps.setup-frontend.outputs.frontend_available == ''true'' && ''http://localhost:8080'' || secrets.CYPRESS_BASE_URL || ''http://localhost:8080'' }}'
           wait-on-timeout: 120
           browser: chrome
           headless: true
@@ -149,6 +168,20 @@ jobs:
           CYPRESS_baseUrl: ${{ secrets.CYPRESS_BASE_URL || 'http://localhost:8080' }}
           CYPRESS_API_BASE_URL: ${{ secrets.CYPRESS_API_BASE_URL || 'http://localhost:5000/api' }}
           CYPRESS_FRONTEND_URL: ${{ secrets.CYPRESS_FRONTEND_URL || 'http://localhost:8080' }}
+
+      # Warning if no servers available
+      - name: Warning - No servers available
+        if: steps.setup-frontend.outputs.frontend_available != 'true' && steps.setup-backend.outputs.backend_available != 'true' && secrets.CYPRESS_BASE_URL == ''
+        run: |
+          echo "⚠️ WARNING: No servers are available to run tests!"
+          echo ""
+          echo "Possible solutions:"
+          echo "1. Add PAT_TOKEN secret if QBrain repository is private"
+          echo "2. Add CYPRESS_BASE_URL and CYPRESS_API_BASE_URL secrets for external servers"
+          echo "3. Make QBrain repository public"
+          echo ""
+          echo "See README.md for more information"
+          exit 1
 
       # Upload results
       - name: Upload Cypress screenshots
