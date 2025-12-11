@@ -30,17 +30,25 @@ jobs:
 
       # Checkout QBrain repository (monorepo with backend and frontend)
       - name: Checkout QBrain repository
+        id: checkout-qbrain
         uses: actions/checkout@v4
         with:
           repository: ${{ secrets.QBRAIN_REPO || 'fatimarajab12/QBrain' }}
           path: qbrain
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
+        continue-on-error: true
 
       # Setup and start Backend
       - name: Setup Backend
         id: setup-backend
-        working-directory: ./qbrain/backend
         run: |
+          if [ ! -d "qbrain/backend" ] || [ ! -f "qbrain/backend/package.json" ]; then
+            echo "backend_available=false" >> $GITHUB_OUTPUT
+            echo "Backend not available - QBrain repository checkout may have failed"
+            echo "This is OK if you're using external servers"
+            exit 0
+          fi
+          cd qbrain/backend
           if [ -f "package.json" ]; then
             npm ci
             echo "backend_available=true" >> $GITHUB_OUTPUT
@@ -69,8 +77,14 @@ jobs:
       # Setup and start Frontend
       - name: Setup Frontend
         id: setup-frontend
-        working-directory: ./qbrain/frontend
         run: |
+          if [ ! -d "qbrain/frontend" ] || [ ! -f "qbrain/frontend/package.json" ]; then
+            echo "frontend_available=false" >> $GITHUB_OUTPUT
+            echo "Frontend not available - QBrain repository checkout may have failed"
+            echo "This is OK if you're using external servers"
+            exit 0
+          fi
+          cd qbrain/frontend
           if [ -f "package.json" ]; then
             npm ci
             echo "frontend_available=true" >> $GITHUB_OUTPUT
