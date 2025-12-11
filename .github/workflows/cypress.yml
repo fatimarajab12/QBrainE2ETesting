@@ -127,7 +127,7 @@ jobs:
         uses: cypress-io/github-action@v6
         with:
           install: false
-          wait-on: '${{ steps.setup-frontend.outputs.frontend_available == "true" && "http://localhost:8080" || secrets.CYPRESS_BASE_URL || "http://localhost:8080" }}'
+          wait-on: 'http://localhost:8080'
           wait-on-timeout: 120
           browser: chrome
           headless: true
