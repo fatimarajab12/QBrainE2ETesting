@@ -15,9 +15,14 @@
 
 // Import commands.js using ES2015 syntax:
 import './commands';
+
+// Import step definitions
 import './step-definitions';
 
 // Import step definitions from all test files
 // Cucumber will automatically discover step definitions from .steps.ts files
 // This file ensures all step definitions are loaded
+
+// Prevent TypeScript errors
+export {};
 

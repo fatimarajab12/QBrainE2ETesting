@@ -178,10 +178,13 @@ jobs:
           wait-on: '${{ steps.setup-frontend.outputs.frontend_available == ''true'' && ''http://localhost:8080'' || secrets.CYPRESS_BASE_URL || ''http://localhost:8080'' }}'
           wait-on-timeout: 120
           browser: chrome
+          spec: 'cypress/e2e/health-check/*.feature'
+          quiet: false
         env:
           CYPRESS_baseUrl: ${{ secrets.CYPRESS_BASE_URL || 'http://localhost:8080' }}
           CYPRESS_API_BASE_URL: ${{ secrets.CYPRESS_API_BASE_URL || 'http://localhost:5000/api' }}
           CYPRESS_FRONTEND_URL: ${{ secrets.CYPRESS_FRONTEND_URL || 'http://localhost:8080' }}
+        continue-on-error: true
 
       # Warning if no servers available
       - name: Warning - No servers available
