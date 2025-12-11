@@ -65,7 +65,7 @@ jobs:
           cd qbrain/backend
           if [ -f "package.json" ]; then
             echo "📦 Installing backend dependencies..."
-            npm ci
+            npm ci --legacy-peer-deps || npm install --legacy-peer-deps
             echo "backend_available=true" >> $GITHUB_OUTPUT
             echo "✅ Backend setup successful"
           else
@@ -178,7 +178,6 @@ jobs:
           wait-on: '${{ steps.setup-frontend.outputs.frontend_available == ''true'' && ''http://localhost:8080'' || secrets.CYPRESS_BASE_URL || ''http://localhost:8080'' }}'
           wait-on-timeout: 120
           browser: chrome
-          headless: true
         env:
           CYPRESS_baseUrl: ${{ secrets.CYPRESS_BASE_URL || 'http://localhost:8080' }}
           CYPRESS_API_BASE_URL: ${{ secrets.CYPRESS_API_BASE_URL || 'http://localhost:5000/api' }}
