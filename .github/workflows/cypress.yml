@@ -1,0 +1,199 @@
+name: Cypress E2E Tests
+
+on:
+  push:
+    branches: [ main, develop, master ]
+  pull_request:
+    branches: [ main, develop, master ]
+  workflow_dispatch:
+
+jobs:
+  cypress-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install Cypress dependencies
+        working-directory: .
+        run: npm ci
+
+      # Checkout QBrain repository (monorepo with backend and frontend)
+      - name: Checkout QBrain repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ secrets.QBRAIN_REPO || 'fatimarajab12/QBrain' }}
+          path: qbrain
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Setup and start Backend
+      - name: Setup Backend
+        id: setup-backend
+        working-directory: ./qbrain/backend
+        run: |
+          if [ -f "package.json" ]; then
+            npm ci
+            echo "backend_available=true" >> $GITHUB_OUTPUT
+          else
+            echo "backend_available=false" >> $GITHUB_OUTPUT
+            echo "Backend package.json not found"
+          fi
+        continue-on-error: true
+
+      - name: Start Backend Server
+        if: steps.setup-backend.outputs.backend_available == 'true'
+        working-directory: ./qbrain/backend
+        run: |
+          npm run dev > ../backend.log 2>&1 &
+          echo $! > ../backend.pid
+          echo "Backend server started with PID: $(cat ../backend.pid)"
+        env:
+          NODE_ENV: test
+          PORT: 5000
+          MONGO_URI: ${{ secrets.MONGO_URI || 'mongodb://localhost:27017/qbrain-test' }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET || 'test-secret-key' }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      # Setup and start Frontend
+      - name: Setup Frontend
+        id: setup-frontend
+        working-directory: ./qbrain/frontend
+        run: |
+          if [ -f "package.json" ]; then
+            npm ci
+            echo "frontend_available=true" >> $GITHUB_OUTPUT
+          else
+            echo "frontend_available=false" >> $GITHUB_OUTPUT
+            echo "Frontend package.json not found"
+          fi
+        continue-on-error: true
+
+      - name: Start Frontend Server
+        if: steps.setup-frontend.outputs.frontend_available == 'true'
+        working-directory: ./qbrain/frontend
+        run: |
+          npm run dev > ../frontend.log 2>&1 &
+          echo $! > ../frontend.pid
+          echo "Frontend server started with PID: $(cat ../frontend.pid)"
+        env:
+          VITE_API_URL: http://localhost:5000
+          PORT: 8080
+
+      # Wait for Servers to be ready
+      - name: Wait for Backend
+        if: steps.setup-backend.outputs.backend_available == 'true'
+        run: |
+          echo "Waiting for Backend to be ready..."
+          for i in {1..30}; do
+            if curl -f http://localhost:5000/api/health 2>/dev/null || curl -f http://localhost:5000/health 2>/dev/null || curl -f http://localhost:5000 2>/dev/null; then
+              echo "Backend is ready!"
+              exit 0
+            fi
+            echo "Attempt $i: Backend not ready yet, waiting 2 seconds..."
+            sleep 2
+          done
+          echo "Backend health check timeout, but continuing..."
+        continue-on-error: true
+
+      - name: Wait for Frontend
+        if: steps.setup-frontend.outputs.frontend_available == 'true'
+        run: |
+          echo "Waiting for Frontend to be ready..."
+          for i in {1..30}; do
+            if curl -f http://localhost:8080 2>/dev/null; then
+              echo "Frontend is ready!"
+              exit 0
+            fi
+            echo "Attempt $i: Frontend not ready yet, waiting 2 seconds..."
+            sleep 2
+          done
+          echo "Frontend health check timeout, but continuing..."
+        continue-on-error: true
+
+      # Run Cypress tests
+      - name: Run Cypress tests
+        uses: cypress-io/github-action@v6
+        with:
+          install: false
+          wait-on: '${{ steps.setup-frontend.outputs.frontend_available == "true" && "http://localhost:8080" || secrets.CYPRESS_BASE_URL || "http://localhost:8080" }}'
+          wait-on-timeout: 120
+          browser: chrome
+          headless: true
+        env:
+          CYPRESS_baseUrl: ${{ secrets.CYPRESS_BASE_URL || 'http://localhost:8080' }}
+          CYPRESS_API_BASE_URL: ${{ secrets.CYPRESS_API_BASE_URL || 'http://localhost:5000/api' }}
+          CYPRESS_FRONTEND_URL: ${{ secrets.CYPRESS_FRONTEND_URL || 'http://localhost:8080' }}
+
+      # Upload results
+      - name: Upload Cypress screenshots
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cypress-screenshots
+          path: cypress/screenshots
+          retention-days: 7
+
+      - name: Upload Cypress videos
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cypress-videos
+          path: cypress/videos
+          retention-days: 7
+
+      # Upload server logs for debugging
+      - name: Upload Backend logs
+        if: always() && steps.setup-backend.outputs.backend_available == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-logs
+          path: backend.log
+          retention-days: 1
+          if-no-files-found: ignore
+
+      - name: Upload Frontend logs
+        if: always() && steps.setup-frontend.outputs.frontend_available == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-logs
+          path: frontend.log
+          retention-days: 1
+          if-no-files-found: ignore
+
+      # Cleanup: Stop Servers
+      - name: Stop Backend Server
+        if: always() && steps.setup-backend.outputs.backend_available == 'true'
+        run: |
+          if [ -f backend.pid ]; then
+            PID=$(cat backend.pid)
+            echo "Stopping Backend server with PID: $PID"
+            kill $PID 2>/dev/null || true
+            sleep 2
+            kill -9 $PID 2>/dev/null || true
+          fi
+        continue-on-error: true
+
+      - name: Stop Frontend Server
+        if: always() && steps.setup-frontend.outputs.frontend_available == 'true'
+        run: |
+          if [ -f frontend.pid ]; then
+            PID=$(cat frontend.pid)
+            echo "Stopping Frontend server with PID: $PID"
+            kill $PID 2>/dev/null || true
+            sleep 2
+            kill -9 $PID 2>/dev/null || true
+          fi
+        continue-on-error: true
+

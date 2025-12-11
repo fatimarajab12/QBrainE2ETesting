@@ -1,0 +1,8 @@
+// General test data file
+// Contains:
+// - User data (valid, invalid)
+// - Project data (valid, update)
+// - Feature data (valid, update)
+// - Test case data (valid, update)
+// - Bug data (valid, update)
+// - Any other static test data
