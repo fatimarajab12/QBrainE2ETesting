@@ -154,9 +154,24 @@ jobs:
           echo "Frontend health check timeout, but continuing..."
         continue-on-error: true
 
+      # Check if we have servers or external URLs
+      - name: Check test availability
+        id: check-availability
+        run: |
+          if [ "${{ steps.setup-frontend.outputs.frontend_available }}" == "true" ] || [ "${{ steps.setup-backend.outputs.backend_available }}" == "true" ]; then
+            echo "tests_available=true" >> $GITHUB_OUTPUT
+            echo "✅ Local servers available for testing"
+          elif [ -n "${{ secrets.CYPRESS_BASE_URL }}" ]; then
+            echo "tests_available=true" >> $GITHUB_OUTPUT
+            echo "✅ External URLs configured for testing"
+          else
+            echo "tests_available=false" >> $GITHUB_OUTPUT
+            echo "⚠️ No servers or external URLs available"
+          fi
+
       # Run Cypress tests
       - name: Run Cypress tests
-        if: steps.setup-frontend.outputs.frontend_available == 'true' || steps.setup-backend.outputs.backend_available == 'true' || secrets.CYPRESS_BASE_URL != ''
+        if: steps.check-availability.outputs.tests_available == 'true'
         uses: cypress-io/github-action@v6
         with:
           install: false
@@ -171,7 +186,7 @@ jobs:
 
       # Warning if no servers available
       - name: Warning - No servers available
-        if: steps.setup-frontend.outputs.frontend_available != 'true' && steps.setup-backend.outputs.backend_available != 'true' && secrets.CYPRESS_BASE_URL == ''
+        if: steps.check-availability.outputs.tests_available != 'true'
         run: |
           echo "⚠️ WARNING: No servers are available to run tests!"
           echo ""
