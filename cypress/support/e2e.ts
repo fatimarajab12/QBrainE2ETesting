@@ -17,6 +17,7 @@
 import './commands';
 import './step-definitions';
 
-// Alternatively you can use CommonJS syntax:
-// require('./commands')
+// Import step definitions from all test files
+// Cucumber will automatically discover step definitions from .steps.ts files
+// This file ensures all step definitions are loaded
 
