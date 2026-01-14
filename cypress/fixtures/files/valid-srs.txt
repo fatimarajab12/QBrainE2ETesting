@@ -1,0 +1,25 @@
+Software Requirements Specification (SRS)
+Version 1.0
+
+1. Introduction
+This is a test SRS document for E2E testing purposes.
+
+1.1 Purpose
+The purpose of this document is to test the SRS upload functionality in QBrain.
+
+1.2 Scope
+This document covers basic requirements for testing purposes.
+
+2. Functional Requirements
+2.1 User Authentication
+The system shall allow users to login with email and password.
+
+2.2 Project Management
+The system shall allow users to create, view, update, and delete projects.
+
+3. Non-Functional Requirements
+3.1 Performance
+The system shall respond to user actions within 2 seconds.
+
+3.2 Security
+The system shall encrypt user passwords.

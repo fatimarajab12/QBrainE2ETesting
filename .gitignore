@@ -1,8 +1,26 @@
-node_modules/
+# Cypress
 cypress/videos/
 cypress/screenshots/
 cypress/downloads/
-.DS_Store
-*.log
-.env
+cypress/cucumber-json/
 
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local

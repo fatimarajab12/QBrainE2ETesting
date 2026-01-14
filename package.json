@@ -1,26 +1,38 @@
 {
-  "name": "qbrain-cypress-tests",
+  "name": "qbrain-cypress",
   "version": "1.0.0",
-  "description": "Cypress E2E tests for QBrain project using Cucumber",
-  "main": "index.js",
+  "description": "Cypress E2E Tests for QBrain Project with Cucumber",
   "scripts": {
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
-    "test": "cypress run"
+    "test": "cypress run",
+    "test:headed": "cypress run --headed",
+    "test:chrome": "cypress run --browser chrome",
+    "test:firefox": "cypress run --browser firefox"
   },
   "keywords": [
     "cypress",
+    "cucumber",
     "e2e",
     "testing",
-    "cucumber"
+    "qbrain"
   ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "cypress": "^13.6.0",
     "@badeball/cypress-cucumber-preprocessor": "^20.0.0",
     "@bahmutov/cypress-esbuild-preprocessor": "^2.2.0",
-    "cypress": "^13.7.0",
-    "esbuild": "^0.27.1",
-    "typescript": "^5.3.0"
+    "esbuild": "^0.19.0"
+  },
+  "cypress-cucumber-preprocessor": {
+    "nonGlobalStepDefinitions": true,
+    "stepDefinitions": "cypress/support/step_definitions/**/*.js",
+    "cucumberJson": {
+      "generate": true,
+      "outputFolder": "cypress/cucumber-json",
+      "filePrefix": "",
+      "fileSuffix": ".cucumber"
+    }
   }
 }

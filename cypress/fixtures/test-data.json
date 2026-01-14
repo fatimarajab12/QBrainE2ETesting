@@ -1,8 +1,40 @@
-// General test data file
-// Contains:
-// - User data (valid, invalid)
-// - Project data (valid, update)
-// - Feature data (valid, update)
-// - Test case data (valid, update)
-// - Bug data (valid, update)
-// - Any other static test data
+{
+  "users": {
+    "validUser": {
+      "email": "fatimarajab678@gmail.com",
+      "password": "12345678",
+      "name": "Fatima Rajab"
+    },
+    "invalidUser": {
+      "email": "invalid@example.com",
+      "password": "WrongPassword"
+    },
+    "adminUser": {
+      "email": "fatimarajab678@gmail.com",
+      "password": "12345678",
+      "name": "Fatima Rajab"
+    }
+  },
+  "projects": {
+    "validProject": {
+      "name": "Test Project",
+      "description": "Test Project Description for E2E Testing"
+    },
+    "projectWithSRS": {
+      "name": "Project with SRS",
+      "description": "Project that includes SRS document"
+    }
+  },
+  "api": {
+    "baseUrl": "http://localhost:5000/api", 
+    "endpoints": {
+      "login": "/auth/sign-in",
+      "signup": "/auth/sign-up",
+      "projects": "/projects",
+      "features": "/features",
+      "testCases": "/test-cases",
+      "bugs": "/bugs",
+      "chatbot": "/chatbot"
+    }
+  }
+}

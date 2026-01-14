@@ -1,477 +1,282 @@
 # QBrain Cypress E2E Tests
 
-[![Cypress](https://img.shields.io/badge/Cypress-13.17.0-00D7A7?logo=cypress&logoColor=white)](https://www.cypress.io/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9.3-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Cucumber](https://img.shields.io/badge/Cucumber-BDD-23D96C?logo=cucumber&logoColor=white)](https://cucumber.io/)
-[![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-Enabled-2088FF?logo=github-actions&logoColor=white)](https://github.com/features/actions)
-[![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
-
-> Comprehensive end-to-end testing suite for the [QBrain](https://github.com/fatimarajab12/QBrain) project using Cypress and Cucumber BDD framework.
+Cypress End-to-End testing framework for QBrain project using Cucumber (BDD) and Page Object Model (POM).
 
 ## 📋 Table of Contents
 
-- [Overview](#-overview)
-- [Features](#-features)
-- [Prerequisites](#-prerequisites)
-- [Installation](#-installation)
-- [Project Structure](#-project-structure)
-- [Running Tests](#-running-tests)
-- [CI/CD with GitHub Actions](#-cicd-with-github-actions)
-- [Test Organization](#-test-organization)
-- [Page Object Model](#-page-object-model)
-- [Writing Tests](#-writing-tests)
-- [Configuration](#-configuration)
-- [Best Practices](#-best-practices)
-- [Troubleshooting](#-troubleshooting)
-- [Contributing](#-contributing)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Project Structure](#project-structure)
+- [Running Tests](#running-tests)
+- [Writing Tests](#writing-tests)
+- [Naming Conventions](#naming-conventions)
+- [Best Practices](#best-practices)
 
-## 🎯 Overview
+## 🚀 Prerequisites
 
-This testing framework provides comprehensive E2E coverage for the **QBrain** platform - an AI-powered SRS analysis and test case generation system. The suite includes API testing, UI testing, and integration testing using modern BDD practices.
+- Node.js >= 18.0.0
+- npm >= 9.0.0
+- **QBrain Frontend** running on `http://localhost:8080` (configured in vite.config.ts)
+- **QBrain Backend API** running on `http://localhost:5000/api` (Backend port 5000 + /api prefix)
 
-### What is QBrain?
+## 📦 Installation
 
-[QBrain](https://github.com/fatimarajab12/QBrain) is an intelligent platform that leverages RAG (Retrieval Augmented Generation) and AI technologies to:
-- Analyze SRS (Software Requirements Specification) documents
-- Automatically extract features using GPT-4o-mini
-- Generate test cases based on extracted features
-- Provide comprehensive coverage analysis
+1. **Navigate to QBrainCypress directory:**
+   ```bash
+   cd QBrainCypress
+   ```
 
-## ✨ Features
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-### 🧪 Testing Capabilities
-
-- ✅ **API Testing**: Complete backend endpoint coverage (Authentication, Projects, Features, Test Cases, Bugs)
-- ✅ **UI Testing**: Full user interface interaction testing
-- ✅ **Integration Testing**: End-to-end scenarios and data synchronization
-- ✅ **Status Management**: Comprehensive status update testing for Features, Test Cases, and Bugs
-
-### 🛠️ Technical Features
-
-- ✅ **Cucumber BDD**: Behavior-Driven Development with Gherkin syntax
-- ✅ **Page Object Model**: Maintainable and reusable test code architecture
-- ✅ **TypeScript**: Type-safe test development
-- ✅ **CI/CD Integration**: Automated testing with GitHub Actions
-- ✅ **Comprehensive Coverage**: 100+ test scenarios across API and UI
-
-## 📦 Prerequisites
-
-Before you begin, ensure you have the following installed:
-
-- **Node.js**: >= 18.0.0
-- **npm**: >= 9.0.0
-- **Backend Server**: Running on `http://localhost:5000` (or configured via environment variables)
-- **Frontend Application**: Running on `http://localhost:8080` (or configured via environment variables)
-
-> **Note**: For CI/CD, servers are automatically started by GitHub Actions. No manual setup required!
-
-## 🚀 Installation
-
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/your-username/QBrainCypress.git
-cd QBrainCypress
-```
-
-### 2. Install Dependencies
-
-```bash
-npm install
-```
-
-### 3. Verify Installation
-
-```bash
-npx cypress verify
-```
-
-### 4. Configure Environment (Optional)
-
-Create a `.env` file or set environment variables:
-
-```bash
-# Backend Configuration
-API_BASE_URL=http://localhost:5000/api
-
-# Frontend Configuration
-FRONTEND_URL=http://localhost:8080
-CYPRESS_BASE_URL=http://localhost:8080
-```
+3. **Verify installation:**
+   ```bash
+   npx cypress verify
+   ```
 
 ## 📁 Project Structure
 
 ```
 QBrainCypress/
-├── .github/
-│   └── workflows/
-│       ├── cypress.yml              # GitHub Actions workflow
-│       └── README.md                # CI/CD documentation
 ├── cypress/
-│   ├── config/
-│   │   └── cypress.config.ts        # Cypress configuration (legacy)
 │   ├── e2e/
-│   │   ├── api/                     # API test suites
-│   │   │   ├── authentication/    # Login, Signup
-│   │   │   ├── projects/           # CRUD operations
-│   │   │   ├── features/           # Feature management
-│   │   │   ├── test-cases/         # Test case management
-│   │   │   └── bugs/               # Bug tracking
-│   │   ├── ui/                      # UI test suites
-│   │   │   ├── authentication/    # UI login/signup
-│   │   │   ├── projects/          # Project UI flows
-│   │   │   ├── features/          # Feature UI flows
-│   │   │   ├── test-cases/        # Test case UI flows
-│   │   │   └── bugs/              # Bug UI flows
-│   │   └── integration/            # Integration tests
-│   │       └── counts-synchronization.feature
-│   ├── fixtures/                   # Test data
-│   │   ├── test-data.json
-│   │   └── users.json
-│   └── support/
-│       ├── commands.ts              # Custom Cypress commands
-│       ├── step-definitions.ts     # Common step definitions
-│       ├── helpers/                # Helper utilities
-│       │   ├── api-helpers.ts
-│       │   ├── data-generator.ts
-│       │   └── ui-helpers.ts
-│       └── page-objects/           # Page Object Model
-│           ├── pages/              # Page objects
-│           ├── components/         # Component objects
-│           └── api/                # API objects
-├── cypress.config.ts                # Main Cypress config
-├── package.json
-├── tsconfig.json
-└── README.md
+│   │   └── features/              # Cucumber feature files
+│   │       ├── authentication/    # Auth-related features
+│   │       ├── projects/          # Project-related features
+│   │       └── integration/       # Integration test features
+│   │
+│   ├── support/
+│   │   ├── step_definitions/      # Cucumber step definitions
+│   │   │   ├── authentication/
+│   │   │   ├── projects/
+│   │   │   └── common/
+│   │   │
+│   │   ├── page-objects/          # Page Object Model files
+│   │   │   ├── authentication/
+│   │   │   ├── projects/
+│   │   │   └── common/
+│   │   │
+│   │   ├── helpers/               # Helper functions
+│   │   ├── commands.js            # Custom Cypress commands
+│   │   ├── hooks.js               # Cypress hooks
+│   │   └── index.js               # Support entry point
+│   │
+│   ├── fixtures/                  # Test data files
+│   ├── downloads/                 # Downloaded files
+│   ├── videos/                    # Test videos (gitignored)
+│   ├── screenshots/               # Test screenshots (gitignored)
+│   └── cucumber-json/             # Cucumber JSON reports (gitignored)
+│
+├── cypress.config.js              # Cypress configuration
+├── package.json                   # Dependencies and scripts
+└── README.md                      # This file
 ```
 
 ## 🏃 Running Tests
 
-### Interactive Mode (Recommended for Development)
-
-Open Cypress Test Runner for interactive testing:
-
+### Open Cypress Test Runner (Interactive Mode)
 ```bash
 npm run cypress:open
 ```
 
-### Headless Mode (CI/CD)
-
-Run all tests in headless mode:
-
+### Run Tests Headless
 ```bash
 npm run cypress:run
 ```
 
-### Run Specific Test Suites
-
-**Run all API tests:**
+### Run Tests in Headed Mode
 ```bash
-npx cypress run --spec "cypress/e2e/api/**/*.feature"
+npm run test:headed
 ```
 
-**Run all UI tests:**
+### Run Tests in Specific Browser
 ```bash
-npx cypress run --spec "cypress/e2e/ui/**/*.feature"
+npm run test:chrome
+npm run test:firefox
 ```
 
-**Run specific feature:**
+### Run Specific Feature
 ```bash
-npx cypress run --spec "cypress/e2e/api/authentication/login.api.feature"
+npx cypress run --spec "cypress/e2e/features/authentication/login.feature"
 ```
-
-**Run by tag (if configured):**
-```bash
-npx cypress run --env tags="@api"
-```
-
-## 🔄 CI/CD with GitHub Actions
-
-This project includes automated CI/CD pipeline that runs tests automatically on every push and pull request.
-
-### How It Works
-
-1. **Automatic Trigger**: Tests run on push to `main`, `develop`, or `master` branches
-2. **Environment Setup**: GitHub Actions automatically:
-   - Checks out QBrain repository (backend + frontend)
-   - Installs dependencies
-   - Starts backend server (port 5000)
-   - Starts frontend server (port 8080)
-   - Waits for servers to be ready
-   - Runs Cypress tests
-   - Uploads results (screenshots, videos, logs)
-
-### Setup
-
-1. **No Manual Setup Required**: The workflow is pre-configured
-2. **Optional Secrets**: Add to GitHub repository secrets if needed:
-   ```
-   QBRAIN_REPO=fatimarajab12/QBrain
-   MONGO_URI=your-mongodb-uri
-   OPENAI_API_KEY=your-openai-key
-   SUPABASE_URL=your-supabase-url
-   SUPABASE_SERVICE_ROLE_KEY=your-supabase-key
-   ```
-
-### View Results
-
-- Go to **Actions** tab in GitHub
-- Select the workflow run
-- Download artifacts (screenshots, videos, logs)
-
-For detailed CI/CD documentation, see [`.github/workflows/README.md`](.github/workflows/README.md)
-
-## 🧪 Test Organization
-
-### API Tests (`cypress/e2e/api/`)
-
-Comprehensive backend endpoint testing:
-
-- **Authentication**: Login, Signup, Profile management
-- **Projects**: Create, Read, Update, Delete, Counts
-- **Features**: CRUD operations, Status updates, Counts
-- **Test Cases**: CRUD operations, Status updates, Counts
-- **Bugs**: CRUD operations, Status updates, Counts
-
-### UI Tests (`cypress/e2e/ui/`)
-
-Complete user interface testing:
-
-- **Authentication**: Login/Signup flows
-- **Projects**: Project creation, viewing, counts display
-- **Features**: Feature management, status updates via UI
-- **Test Cases**: Test case management, status updates
-- **Bugs**: Bug tracking, status updates
-
-### Integration Tests (`cypress/e2e/integration/`)
-
-End-to-end scenario testing:
-
-- **Counts Synchronization**: Verify API and UI counts match
-
-## 🏗️ Page Object Model
-
-The Page Object Model (POM) pattern ensures maintainable and reusable test code:
-
-### Pages (`support/page-objects/pages/`)
-
-- `LoginPage.ts` - Login page interactions
-- `DashboardPage.ts` - Dashboard page interactions
-- `ProjectDetailsPage.ts` - Project details page
-- `FeatureDetailsPage.ts` - Feature details page
-- `ProfilePage.ts` - User profile page
-
-### Components (`support/page-objects/components/`)
-
-- `ProjectCard.ts` - Project card component
-- `FeatureCard.ts` - Feature card component
-- `TestCaseCard.ts` - Test case card component
-- `BugCard.ts` - Bug card component
-- `StatusDropdown.ts` - Status dropdown component
-- `CreateDialog.ts` - Create dialog component
-
-### API Objects (`support/page-objects/api/`)
-
-- `AuthApi.ts` - Authentication API calls
-- `ProjectApi.ts` - Project API calls
-- `FeatureApi.ts` - Feature API calls
-- `TestCaseApi.ts` - Test case API calls
-- `BugApi.ts` - Bug API calls
 
 ## ✍️ Writing Tests
 
-### Cucumber Feature File Example
+### 1. Feature Files (Gherkin Syntax)
+
+Create `.feature` files in `cypress/e2e/features/`:
 
 ```gherkin
-Feature: Login via API
+Feature: User Login
   As a user
-  I want to login
-  So that I can access the application
+  I want to login to the QBrain system
+  So that I can access my projects
 
-  Scenario: Login successfully with valid data
-    Given I have a registered user
-    When I send a login request with valid credentials
-    Then I should receive a success response
-    And I should receive an authentication token
-    And I should receive user data
+  Background:
+    Given I navigate to the login page
+
+  @smoke @critical
+  Scenario: Successful login
+    When I enter valid email "test@example.com"
+    And I enter valid password "Test123!@#"
+    And I click the login button
+    Then I should be redirected to the dashboard
 ```
 
-### Step Definitions Example
+### 2. Step Definitions
 
-```typescript
+Create step definition files in `cypress/support/step_definitions/`:
+
+```javascript
 import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
-import { AuthApi } from '../../support/page-objects/api/AuthApi';
+import LoginPage from '../../page-objects/authentication/LoginPage';
 
-When('I send a login request with valid credentials', () => {
-  AuthApi.login('test@example.com', 'password123')
-    .then((response) => {
-      expect(response.status).to.eq(200);
-      expect(response.body.success).to.be.true;
-    });
+When('I enter valid email {string}', (email) => {
+  LoginPage.enterEmail(email);
 });
 ```
 
-### Using Page Objects
+### 3. Page Objects
 
-```typescript
-import { LoginPage } from '../../support/page-objects/pages/LoginPage';
+Create page object files in `cypress/support/page-objects/`:
 
-const loginPage = new LoginPage();
+```javascript
+class LoginPage {
+  getEmailInput() {
+    return cy.get('input[name="email"]').first();
+  }
 
-Given('I am on the login page', () => {
-  loginPage.visit();
-});
+  enterEmail(email) {
+    this.getEmailInput().clear().type(email);
+    return this;
+  }
+}
 
-When('I enter valid credentials', () => {
-  loginPage.fillEmail('test@example.com');
-  loginPage.fillPassword('password123');
-  loginPage.clickLogin();
-});
+export default new LoginPage();
 ```
 
-## ⚙️ Configuration
+## 📝 Naming Conventions
 
-### Cypress Configuration (`cypress.config.ts`)
+### Files and Folders
+- **Feature files**: `kebab-case.feature` (e.g., `login.feature`)
+- **Step definitions**: `kebab-case.steps.js` (e.g., `login.steps.js`)
+- **Page objects**: `PascalCase.js` (e.g., `LoginPage.js`)
+- **Folders**: `kebab-case` (e.g., `authentication/`, `step_definitions/`)
 
-Key settings:
-- **baseUrl**: Frontend URL (default: `http://localhost:8080`)
-- **specPattern**: Test file pattern (`**/*.feature`)
-- **viewport**: Default viewport size (1280x720)
-- **timeouts**: Request and command timeouts (10000ms)
+### Variables and Methods
+- **Variables**: `camelCase` (e.g., `userEmail`)
+- **Methods**: `camelCase` (e.g., `enterEmail()`)
+- **Constants**: `UPPER_SNAKE_CASE` (e.g., `MAX_RETRY_COUNT`)
 
-### Environment Variables
+### Test Tags
+- `@smoke` - Smoke tests (critical paths)
+- `@critical` - Critical functionality tests
+- `@negative` - Negative test cases
+- `@integration` - Integration tests
 
-Set environment variables in `cypress.config.ts` or via command line:
+## ✅ Best Practices
 
-```bash
-# Default values
-API_BASE_URL=http://localhost:5000/api
-FRONTEND_URL=http://localhost:8080
-CYPRESS_BASE_URL=http://localhost:8080
+1. **Use Page Object Model (POM)**
+   - Encapsulate page elements and actions in page objects
+   - Reuse page objects across tests
+   - Keep page objects focused and single-responsibility
+
+2. **Follow BDD Principles**
+   - Write readable, business-focused scenarios
+   - Use Given-When-Then structure
+   - Keep scenarios independent and testable
+
+3. **Data Management**
+   - Use fixtures for static test data
+   - Use dynamic data generation helpers for unique data
+   - Generate unique data when needed (emails, project names, etc.)
+   - Avoid hardcoding credentials
+   
+   **Dynamic Data Generation:**
+   - Helper functions available in `cypress/support/helpers/data-generator.js`
+   - Import helpers in step definitions: `import { generateUniqueEmail, generateTestUser } from '../../support/index';`
+   - Use for generating unique test data on the fly
+
+4. **Wait Strategies**
+   - Use Cypress built-in waiting (automatic retry)
+   - Avoid hard-coded waits (`cy.wait(1000)`)
+   - Use `cy.get()` with timeouts for dynamic content
+
+5. **Error Handling**
+   - Handle uncaught exceptions in `support/index.js`
+   - Use appropriate error messages
+   - Take screenshots on failures (automatic)
+
+6. **Test Organization**
+   - Group related tests in feature files
+   - Use tags for test categorization
+   - Keep scenarios focused and small
+
+## 🔧 Configuration
+
+### Base URL
+
+The base URL is configured in `cypress.config.js`:
+
+```javascript
+baseUrl: "http://localhost:8080" // QBrain Frontend (configured in vite.config.ts)
 ```
 
-### TypeScript Configuration (`tsconfig.json`)
+**URLs Configuration:**
+- **Frontend**: `http://localhost:8080` (configured in vite.config.ts)
+- **Backend API**: `http://localhost:5000/api` (Express server on port 5000)
 
-Configured for:
-- ES2020 target
-- Strict type checking
-- Cypress type definitions
-- CommonJS modules
+If your application runs on different ports, update the `baseUrl` in `cypress.config.js` and the API base URL in `cypress/fixtures/test-data.json`.
 
-## 💡 Best Practices
+### Timeouts
 
-### 1. Use Page Object Model
-Always use POM for UI interactions to maintain clean, reusable code.
+Adjust timeouts in `cypress.config.js`:
 
-### 2. Generate Test Data
-Use `DataGenerator` helper to create unique test data:
-
-```typescript
-import { DataGenerator } from '../../support/helpers/data-generator';
-
-const email = DataGenerator.generateEmail();
-const projectName = DataGenerator.generateProjectName();
+```javascript
+defaultCommandTimeout: 10000,
+requestTimeout: 10000,
+responseTimeout: 10000
 ```
 
-### 3. Focus on Status Updates
-For Features, Test Cases, and Bugs, focus on testing status changes using available buttons in the dropdown. No need to test the actions page for each status.
+## 📊 Test Reports
 
-### 4. Use API Helpers
-Leverage `ApiHelpers` for consistent API interactions:
+Cucumber JSON reports are generated in `cypress/cucumber-json/` after test execution.
 
-```typescript
-import { ApiHelpers } from '../../support/helpers/api-helpers';
+## 🐛 Troubleshooting
 
-ApiHelpers.makeRequest('GET', '/projects', null, token)
-  .then((response) => {
-    ApiHelpers.validateSuccessResponse(response);
-  });
-```
+### Tests failing due to timing
+- Increase timeout values in `cypress.config.js`
+- Use `cy.wait()` for known delays
+- Ensure application is fully loaded
 
-### 5. Keep Steps Reusable
-Write step definitions that can be reused across multiple scenarios.
+### Element not found
+- Check selectors in page objects
+- Use `cy.contains()` for text-based selection
+- Verify element is visible and not hidden
 
-### 6. Use Custom Commands
-Utilize custom Cypress commands for common operations:
+### Authentication issues
+- Ensure test user exists in the database
+- Clear cookies/localStorage between tests
+- Use custom `login` command for consistency
 
-```typescript
-cy.login('test@example.com', 'password123');
-cy.apiRequest('GET', '/projects');
-```
-
-## 🔧 Troubleshooting
-
-### Common Issues
-
-**Issue: Tests fail with "Cannot find module"**
-- **Solution**: Ensure all dependencies are installed: `npm install`
-
-**Issue: Cypress cannot connect to backend**
-- **Solution**: Verify backend is running on `http://localhost:5000` or check `API_BASE_URL` environment variable
-
-**Issue: UI tests fail with element not found**
-- **Solution**: Check selectors in Page Objects match current UI
-
-**Issue: Cucumber steps not recognized**
-- **Solution**: Ensure step definitions are properly imported in `step-definitions.ts`
-
-### Debug Mode
-
-Run tests with debug output:
-
-```bash
-# Windows
-set DEBUG=cypress:* && npm run cypress:open
-
-# Linux/Mac
-DEBUG=cypress:* npm run cypress:open
-```
-
-### View Test Reports
-
-After running tests, check:
-- **Videos**: `cypress/videos/` (if enabled)
-- **Screenshots**: `cypress/screenshots/` (on failure)
-- **CI/CD Artifacts**: Available in GitHub Actions for automated runs
-
-## 📚 Additional Resources
+## 📚 Resources
 
 - [Cypress Documentation](https://docs.cypress.io/)
-- [Cucumber Documentation](https://cucumber.io/docs/)
-- [Cypress Cucumber Preprocessor](https://github.com/badeball/cypress-cucumber-preprocessor)
-- [QBrain Project](https://github.com/fatimarajab12/QBrain)
+- [Cucumber Documentation](https://cucumber.io/docs/cucumber/)
+- [BDD Best Practices](https://cucumber.io/docs/bdd/)
 
-## 🤝 Contributing
+## 👥 Contributing
 
 When adding new tests:
 
-1. Follow the existing folder structure
-2. Use Page Object Model pattern
+1. Follow the folder structure
+2. Use Page Object Model
 3. Write clear Gherkin scenarios
-4. Add appropriate step definitions
+4. Add appropriate tags
 5. Update this README if needed
-
-### Development Workflow
-
-1. Create a feature branch
-2. Write tests following BDD practices
-3. Ensure all tests pass locally
-4. Push to GitHub (CI/CD will run automatically)
-5. Create a Pull Request
-
-## 📝 Notes
-
-- **Status Testing**: Focus on changing status only using available buttons. No need to test actions page for each status.
-- **Data Generation**: Always use `DataGenerator` for creating test data to avoid conflicts.
-- **API vs UI**: API tests verify backend functionality, UI tests verify user experience.
-- **CI/CD**: No need to run servers manually - GitHub Actions handles everything automatically.
 
 ## 📄 License
 
-This project is licensed under the MIT License.
-
----
-
-**Happy Testing! 🚀**
-
-Made with ❤️ for [QBrain](https://github.com/fatimarajab12/QBrain)
+MIT
