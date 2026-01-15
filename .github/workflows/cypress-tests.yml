@@ -22,8 +22,7 @@ jobs:
         with:
           repository: fatimarajab12/QBrain
           path: qbrain-repo
-          # If QBrain repo is private, uncomment and add PAT to secrets:
-          # token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
