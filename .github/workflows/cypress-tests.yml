@@ -87,13 +87,14 @@ jobs:
           # wait-on-timeout: 120
           #
           # Option 2: If testing against remote/staging environment, keep start: false
-          # and set CYPRESS_BASE_URL environment variable below
+          # and set CYPRESS_BASE_URL environment variable (see comment below)
           start: false
-        env:
-          # For local services: baseUrl from cypress.config.js will be used (http://localhost:8080)
-          # For remote/staging: Uncomment and set your staging URL:
-          # CYPRESS_BASE_URL: ${{ secrets.CYPRESS_BASE_URL || 'https://your-staging-url.com' }}
-          # CYPRESS_API_URL: ${{ secrets.CYPRESS_API_URL || 'https://api.your-staging-url.com/api' }}
+        # To add environment variables, uncomment the 'env:' block below and add your variables:
+        # env:
+        #   # For local services: baseUrl from cypress.config.js will be used (http://localhost:8080)
+        #   # For remote/staging: Uncomment and set your staging URL:
+        #   CYPRESS_BASE_URL: ${{ secrets.CYPRESS_BASE_URL || 'https://your-staging-url.com' }}
+        #   CYPRESS_API_URL: ${{ secrets.CYPRESS_API_URL || 'https://api.your-staging-url.com/api' }}
 
       - name: Upload Cypress screenshots
         uses: actions/upload-artifact@v4
