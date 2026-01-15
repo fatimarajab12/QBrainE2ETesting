@@ -5,7 +5,7 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
-  workflow_dispatch: # Allow manual triggering
+  workflow_dispatch:
 
 jobs:
   cypress-run:
@@ -14,95 +14,91 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - name: Checkout code
+      - name: Checkout QBrainCypress repo
         uses: actions/checkout@v4
+
+      - name: Checkout QBrain repo
+        uses: actions/checkout@v4
+        with:
+          repository: fatimarajab12/QBrain
+          path: ../QBrain
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: package-lock.json
 
-      - name: Install dependencies
+      # Install Backend dependencies
+      - name: Install Backend dependencies
+        working-directory: ../QBrain/backend
         run: npm ci
 
-      # ===================================================================
-      # SERVICE SETUP (REQUIRED FOR E2E TESTS)
-      # ===================================================================
-      # You need to start Frontend and Backend before running Cypress tests.
-      # Choose ONE of the following options:
-      #
-      # OPTION A: Checkout QBrain repository and start services
-      # Uncomment the following if QBrain repo is separate:
-      # - name: Checkout QBrain repository
-      #   uses: actions/checkout@v4
-      #   with:
-      #     repository: your-org/QBrain  # Update with your repo path
-      #     path: qbrain-repo
-      #
-      # OPTION B: Services are in parent directory (if repos are in same workspace)
-      # - name: Start Backend API
-      #   run: |
-      #     cd ../QBrain/backend
-      #     npm ci
-      #     npm run dev &
-      #   env:
-      #     NODE_ENV: test
-      #
-      # - name: Start Frontend
-      #   run: |
-      #     cd ../QBrain/frontend
-      #     npm ci
-      #     npm run dev &
-      #   env:
-      #     VITE_API_BASE_URL: http://localhost:5000/api
-      #
-      # OPTION C: Use Docker Compose (if available)
-      # - name: Start services with Docker Compose
-      #   run: docker-compose up -d
-      #
-      # OPTION D: Test against deployed staging environment
-      # Update baseUrl in cypress.config.js or set CYPRESS_BASE_URL env var
-      # ===================================================================
+      # Install Frontend dependencies
+      - name: Install Frontend dependencies
+        working-directory: ../QBrain/frontend
+        run: npm ci
 
-      # Wait for services to be ready (uncomment if services are started above)
-      # - name: Wait for services
-      #   run: |
-      #     timeout 120 bash -c 'until curl -f http://localhost:8080 > /dev/null 2>&1; do sleep 2; done'
-      #     timeout 120 bash -c 'until curl -f http://localhost:5000/api/health > /dev/null 2>&1; do sleep 2; done'
+      # Install Cypress dependencies
+      - name: Install Cypress dependencies
+        run: npm ci
 
+      # Setup Backend environment
+      - name: Setup Backend environment
+        working-directory: ../QBrain/backend
+        run: |
+          if [ ! -f .env ]; then
+            cp .env.example .env 2>/dev/null || echo "MONGO_URI=mongodb://localhost:27017/qbrain-test" > .env
+            echo "NODE_ENV=test" >> .env
+          fi
+        continue-on-error: true
+
+      # Start Backend server
+      - name: Start Backend
+        working-directory: ../QBrain/backend
+        run: npm run dev &
+        env:
+          NODE_ENV: test
+          MONGO_URI: ${{ secrets.MONGO_URI || 'mongodb://localhost:27017/qbrain-test' }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET || 'test-secret-key' }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      # Start Frontend server
+      - name: Start Frontend
+        working-directory: ../QBrain/frontend
+        run: npm run dev &
+        env:
+          VITE_API_BASE_URL: http://localhost:5000/api
+
+      # Wait for Backend to be ready
+      - name: Wait for Backend
+        run: |
+          echo "Waiting for Backend to start..."
+          timeout 120 bash -c 'until curl -f http://localhost:5000/api/health > /dev/null 2>&1; do sleep 2; done'
+          echo "Backend is ready!"
+
+      # Wait for Frontend to be ready
+      - name: Wait for Frontend
+        run: |
+          echo "Waiting for Frontend to start..."
+          timeout 120 bash -c 'until curl -f http://localhost:8080 > /dev/null 2>&1; do sleep 2; done'
+          echo "Frontend is ready!"
+
+      # Run Cypress tests
       - name: Run Cypress tests
         uses: cypress-io/github-action@v6
         with:
-          install: false # Already installed dependencies
+          install: false
           browser: chrome
           spec: 'cypress/e2e/features/**/*.feature'
-          record: false # Set to true and add CYPRESS_RECORD_KEY if using Cypress Dashboard
-          # record-key: ${{ secrets.CYPRESS_RECORD_KEY }}
-          # project-id: your-project-id
-          # Temporarily skip baseUrl verification
-          # TODO: Remove these when services are configured or staging URL is set
-          # This prevents Cypress from failing when baseUrl is not accessible
-          wait-on: false
-          # IMPORTANT: Configure based on your setup:
-          # Option 1: If services are started in steps above, uncomment to wait for them:
-          # wait-on: 'http://localhost:8080'
-          # wait-on-timeout: 120
-          # start: 'npm start'  # Command to start your server (if needed)
-          # config: baseUrl=http://localhost:8080  # Restore baseUrl when services are running
-          #
-          # Option 2: If testing against remote/staging environment:
-          # config: baseUrl=https://your-staging-url.com
-          # Remove the temporary 'config: baseUrl=' line above when using staging
-        # Temporarily override baseUrl to skip verification
-        env:
-          CYPRESS_baseUrl: ''  # Empty baseUrl to skip verification
-          # TODO: When services are configured, remove the line above and uncomment:
-          # CYPRESS_BASE_URL: ${{ secrets.CYPRESS_BASE_URL || 'http://localhost:8080' }}
-          # CYPRESS_API_URL: ${{ secrets.CYPRESS_API_URL || 'https://api.your-staging-url.com/api' }}
+          wait-on: 'http://localhost:8080'
+          wait-on-timeout: 120
 
-      - name: Upload Cypress screenshots
+      # Upload Cypress screenshots
+      - name: Upload screenshots
         uses: actions/upload-artifact@v4
         if: failure()
         with:
@@ -110,7 +106,8 @@ jobs:
           path: cypress/screenshots
           retention-days: 7
 
-      - name: Upload Cypress videos
+      # Upload Cypress videos
+      - name: Upload videos
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -118,7 +115,8 @@ jobs:
           path: cypress/videos
           retention-days: 7
 
-      - name: Upload Cucumber JSON reports
+      # Upload Cucumber JSON reports
+      - name: Upload reports
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -126,51 +124,12 @@ jobs:
           path: cypress/cucumber-json
           retention-days: 30
 
+      # Test summary
       - name: Test Summary
         if: always()
         run: |
           echo "## Cypress Test Results" >> $GITHUB_STEP_SUMMARY
           echo "✅ Tests completed" >> $GITHUB_STEP_SUMMARY
           if [ -d "cypress/cucumber-json" ]; then
-            echo "📊 Cucumber reports generated in cypress/cucumber-json/" >> $GITHUB_STEP_SUMMARY
+            echo "📊 Cucumber reports generated" >> $GITHUB_STEP_SUMMARY
           fi
-
-  # Optional: Run tests on multiple browsers
-  # cypress-run-matrix:
-  #   name: Cypress Tests (${{ matrix.browser }})
-  #   runs-on: ubuntu-latest
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       browser: [chrome, firefox, edge]
-  #   timeout-minutes: 30
-  #
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  #
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: '18'
-  #         cache: 'npm'
-  #         cache-dependency-path: package-lock.json
-  #
-  #     - name: Install dependencies
-  #       run: npm ci
-  #
-  #     - name: Run Cypress tests
-  #       uses: cypress-io/github-action@v6
-  #       with:
-  #         install: false
-  #         browser: ${{ matrix.browser }}
-  #         headless: true
-  #         spec: 'cypress/e2e/features/**/*.feature'
-  #
-  #     - name: Upload Cypress videos
-  #       uses: actions/upload-artifact@v4
-  #       if: always()
-  #       with:
-  #         name: cypress-videos-${{ matrix.browser }}
-  #         path: cypress/videos
-  #         retention-days: 7
