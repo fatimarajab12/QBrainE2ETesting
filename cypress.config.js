@@ -7,7 +7,7 @@ module.exports = defineConfig({
   e2e: {
     baseUrl: "http://localhost:8080", // QBrain Frontend (configured in vite.config.ts)
     specPattern: "cypress/e2e/features/**/*.feature",
-    supportFile: "cypress/support/index.js",
+    supportFile: "cypress/support/index.ts",
     videosFolder: "cypress/videos",
     screenshotsFolder: "cypress/screenshots",
     video: true,

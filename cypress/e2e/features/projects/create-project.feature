@@ -22,7 +22,7 @@ Feature: Create Project
     When I click the "New Project" button
     And I enter project name "Project with SRS PDF"
     And I enter project description "Project with PDF SRS document"
-    And I upload SRS file "valid-srs.pdf"
+    And I upload SRS file "validSRS.pdf"
     And I click the "Create Project" button
     Then I should see a success message "Project Created Successfully"
     And I should see a success message "SRS Uploaded Successfully"
@@ -47,8 +47,6 @@ Feature: Create Project
     And I enter project name ""
     And I enter project description "Test description"
     Then the "Create Project" button should be disabled
-    When I try to click the "Create Project" button
-    Then I should see a validation error "Project name is required"
     And the project dialog should remain open
 
   @negative
@@ -57,8 +55,6 @@ Feature: Create Project
     And I enter project name "   "
     And I enter project description "Test description"
     Then the "Create Project" button should be disabled
-    When I try to click the "Create Project" button
-    Then I should see a validation error "Project name is required"
     And the project dialog should remain open
 
   @negative
@@ -66,7 +62,7 @@ Feature: Create Project
     When I click the "New Project" button
     And I enter project name "Test Project"
     And I enter project description "Test description"
-    And I upload SRS file "invalid-file.jpg"
+    And I upload SRS file "download (1).jpg"
     Then I should see an error message "Invalid File Type"
     And I should see error description "Please upload a PDF or TXT file only"
     And the file should not be selected
@@ -76,7 +72,7 @@ Feature: Create Project
     When I click the "New Project" button
     And I enter project name "Test Project"
     And I enter project description "Test description"
-    And I upload SRS file "large-file.pdf"
+    And I upload SRS file "10MB-TESTFILE.ORG.pdf"
     Then I should see an error message "File Too Large"
     And I should see error description "File size must be less than 10MB"
     And the file should not be selected

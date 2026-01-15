@@ -20,14 +20,16 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "cypress": "^13.6.0",
     "@badeball/cypress-cucumber-preprocessor": "^20.0.0",
     "@bahmutov/cypress-esbuild-preprocessor": "^2.2.0",
-    "esbuild": "^0.19.0"
+    "@types/node": "^20.19.29",
+    "cypress": "^13.6.0",
+    "esbuild": "^0.19.0",
+    "typescript": "^5.9.3"
   },
   "cypress-cucumber-preprocessor": {
     "nonGlobalStepDefinitions": true,
-    "stepDefinitions": "cypress/support/step_definitions/**/*.js",
+    "stepDefinitions": "cypress/support/step_definitions/**/*.{js,ts}",
     "cucumberJson": {
       "generate": true,
       "outputFolder": "cypress/cucumber-json",

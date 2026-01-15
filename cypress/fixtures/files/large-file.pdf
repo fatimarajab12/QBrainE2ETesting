@@ -1,1 +1,0 @@
-This file is intentionally large to test file size validation. The file size should exceed 10MB to trigger the validation error.
