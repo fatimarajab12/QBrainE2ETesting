@@ -81,25 +81,26 @@ jobs:
           record: false # Set to true and add CYPRESS_RECORD_KEY if using Cypress Dashboard
           # record-key: ${{ secrets.CYPRESS_RECORD_KEY }}
           # project-id: your-project-id
+          # Temporarily skip baseUrl verification
+          # TODO: Remove these when services are configured or staging URL is set
+          # This prevents Cypress from failing when baseUrl is not accessible
+          wait-on: false
           # IMPORTANT: Configure based on your setup:
           # Option 1: If services are started in steps above, uncomment to wait for them:
           # wait-on: 'http://localhost:8080'
           # wait-on-timeout: 120
           # start: 'npm start'  # Command to start your server (if needed)
+          # config: baseUrl=http://localhost:8080  # Restore baseUrl when services are running
           #
           # Option 2: If testing against remote/staging environment:
-          # Omit 'start' and 'wait-on' parameters, override baseUrl using config:
           # config: baseUrl=https://your-staging-url.com
-          #
-          # Option 3: Skip baseUrl verification temporarily (tests will still fail without server):
-          # Uncomment the line below to disable baseUrl check:
-          # config: baseUrl=
-        # To add environment variables, uncomment the 'env:' block below and add your variables:
-        # env:
-        #   # For local services: baseUrl from cypress.config.js will be used (http://localhost:8080)
-        #   # For remote/staging: Uncomment and set your staging URL:
-        #   CYPRESS_BASE_URL: ${{ secrets.CYPRESS_BASE_URL || 'https://your-staging-url.com' }}
-        #   CYPRESS_API_URL: ${{ secrets.CYPRESS_API_URL || 'https://api.your-staging-url.com/api' }}
+          # Remove the temporary 'config: baseUrl=' line above when using staging
+        # Temporarily override baseUrl to skip verification
+        env:
+          CYPRESS_baseUrl: ''  # Empty baseUrl to skip verification
+          # TODO: When services are configured, remove the line above and uncomment:
+          # CYPRESS_BASE_URL: ${{ secrets.CYPRESS_BASE_URL || 'http://localhost:8080' }}
+          # CYPRESS_API_URL: ${{ secrets.CYPRESS_API_URL || 'https://api.your-staging-url.com/api' }}
 
       - name: Upload Cypress screenshots
         uses: actions/upload-artifact@v4
