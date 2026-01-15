@@ -1,0 +1,76 @@
+# Example workflow for running Cypress tests against a staging environment
+# Rename this file to cypress-tests-staging.yml and configure as needed
+
+name: Cypress E2E Tests (Staging)
+
+on:
+  schedule:
+    # Run tests daily at midnight UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to test against'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  cypress-run-staging:
+    name: Cypress Tests (${{ github.event.inputs.environment || 'staging' }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Cypress tests against staging
+        uses: cypress-io/github-action@v6
+        with:
+          install: false
+          browser: chrome
+          headless: true
+          spec: 'cypress/e2e/features/**/*.feature'
+          config-file: cypress.config.js
+        env:
+          # Configure base URL based on environment
+          CYPRESS_BASE_URL: ${{ github.event.inputs.environment == 'production' && 'https://qbrain-production.com' || 'https://qbrain-staging.com' }}
+          CYPRESS_API_URL: ${{ github.event.inputs.environment == 'production' && 'https://api.qbrain-production.com/api' || 'https://api.qbrain-staging.com/api' }}
+
+      - name: Upload Cypress screenshots
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cypress-screenshots-staging
+          path: cypress/screenshots
+          retention-days: 7
+
+      - name: Upload Cypress videos
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cypress-videos-staging
+          path: cypress/videos
+          retention-days: 7
+
+      - name: Upload Cucumber JSON reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cucumber-json-reports-staging
+          path: cypress/cucumber-json
+          retention-days: 30

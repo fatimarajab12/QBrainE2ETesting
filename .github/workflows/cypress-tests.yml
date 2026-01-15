@@ -1,0 +1,142 @@
+name: Cypress E2E Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  cypress-run:
+    name: Cypress Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Start Backend API (if needed)
+      # Uncomment and configure if your backend needs to be running for tests
+      # - name: Setup Backend API
+      #   run: |
+      #     cd ../QBrain/backend
+      #     npm ci
+      #     npm run dev &
+      #   env:
+      #     NODE_ENV: test
+
+      # Start Frontend (if needed)
+      # Uncomment and configure if your frontend needs to be running for tests
+      # - name: Setup Frontend
+      #   run: |
+      #     cd ../QBrain/frontend
+      #     npm ci
+      #     npm run dev &
+      #   env:
+      #     VITE_API_BASE_URL: http://localhost:5000/api
+
+      # Wait for services to be ready (if services are started)
+      # - name: Wait for services
+      #   run: |
+      #     timeout 120 bash -c 'until curl -f http://localhost:8080 > /dev/null 2>&1; do sleep 2; done'
+      #     timeout 120 bash -c 'until curl -f http://localhost:5000/api/health > /dev/null 2>&1; do sleep 2; done'
+
+      - name: Run Cypress tests
+        uses: cypress-io/github-action@v6
+        with:
+          install: false # Already installed dependencies
+          browser: chrome
+          headless: true
+          spec: 'cypress/e2e/features/**/*.feature'
+          record: false # Set to true and add CYPRESS_RECORD_KEY if using Cypress Dashboard
+          # record-key: ${{ secrets.CYPRESS_RECORD_KEY }}
+          # project-id: your-project-id
+        env:
+          # Add any environment variables needed for tests
+          # CYPRESS_BASE_URL: http://localhost:8080
+          # CYPRESS_API_URL: http://localhost:5000/api
+
+      - name: Upload Cypress screenshots
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cypress-screenshots
+          path: cypress/screenshots
+          retention-days: 7
+
+      - name: Upload Cypress videos
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cypress-videos
+          path: cypress/videos
+          retention-days: 7
+
+      - name: Upload Cucumber JSON reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cucumber-json-reports
+          path: cypress/cucumber-json
+          retention-days: 30
+
+      - name: Test Summary
+        if: always()
+        run: |
+          echo "## Cypress Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Tests completed" >> $GITHUB_STEP_SUMMARY
+          if [ -d "cypress/cucumber-json" ]; then
+            echo "📊 Cucumber reports generated in cypress/cucumber-json/" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # Optional: Run tests on multiple browsers
+  # cypress-run-matrix:
+  #   name: Cypress Tests (${{ matrix.browser }})
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       browser: [chrome, firefox, edge]
+  #   timeout-minutes: 30
+  #
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: '18'
+  #         cache: 'npm'
+  #         cache-dependency-path: package-lock.json
+  #
+  #     - name: Install dependencies
+  #       run: npm ci
+  #
+  #     - name: Run Cypress tests
+  #       uses: cypress-io/github-action@v6
+  #       with:
+  #         install: false
+  #         browser: ${{ matrix.browser }}
+  #         headless: true
+  #         spec: 'cypress/e2e/features/**/*.feature'
+  #
+  #     - name: Upload Cypress videos
+  #       uses: actions/upload-artifact@v4
+  #       if: always()
+  #       with:
+  #         name: cypress-videos-${{ matrix.browser }}
+  #         path: cypress/videos
+  #         retention-days: 7

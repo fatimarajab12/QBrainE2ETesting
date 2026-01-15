@@ -1,5 +1,7 @@
 # QBrain Cypress E2E Tests
 
+[![Cypress Tests](https://github.com/fatimarajab12/QBrainE2ETesting/actions/workflows/cypress-tests.yml/badge.svg)](https://github.com/fatimarajab12/QBrainE2ETesting/actions/workflows/cypress-tests.yml)
+
 Cypress End-to-End testing framework for QBrain project using Cucumber (BDD) and Page Object Model (POM).
 
 ## 📋 Table of Contents
@@ -11,6 +13,7 @@ Cypress End-to-End testing framework for QBrain project using Cucumber (BDD) and
 - [Writing Tests](#writing-tests)
 - [Naming Conventions](#naming-conventions)
 - [Best Practices](#best-practices)
+- [CI/CD](#cicd)
 
 ## 🚀 Prerequisites
 
@@ -64,6 +67,7 @@ QBrainCypress/
 │   │   └── index.js               # Support entry point
 │   │
 │   ├── fixtures/                  # Test data files
+│   │   └── files/                 # Test file uploads (large files gitignored)
 │   ├── downloads/                 # Downloaded files
 │   ├── videos/                    # Test videos (gitignored)
 │   ├── screenshots/               # Test screenshots (gitignored)
@@ -199,6 +203,13 @@ export default new LoginPage();
    - Import helpers in step definitions: `import { generateUniqueEmail, generateTestUser } from '../../support/index';`
    - Use for generating unique test data on the fly
 
+   **Large Test Files:**
+   - Large test files (>50MB) should NOT be committed to Git
+   - Files exceeding GitHub's 100MB limit will block repository pushes
+   - Large test files are automatically ignored via `.gitignore`
+   - If you need large files for testing, store them locally or use Git LFS
+   - Recommended: Generate large test files programmatically in tests rather than storing them
+
 4. **Wait Strategies**
    - Use Cypress built-in waiting (automatic retry)
    - Avoid hard-coded waits (`cy.wait(1000)`)
@@ -244,6 +255,68 @@ responseTimeout: 10000
 
 Cucumber JSON reports are generated in `cypress/cucumber-json/` after test execution.
 
+## 🚀 CI/CD
+
+This project uses GitHub Actions for continuous integration and continuous deployment.
+
+### GitHub Actions Workflow
+
+The CI/CD pipeline automatically runs Cypress tests on:
+- Push to `main` or `develop` branches
+- Pull requests targeting `main` or `develop` branches
+- Manual workflow dispatch (via GitHub Actions UI)
+
+### Workflow Configuration
+
+The workflow file is located at `.github/workflows/cypress-tests.yml` and includes:
+
+- **Automatic test execution** on Chrome browser (headless mode)
+- **Artifact uploads** for:
+  - Screenshots (on test failures)
+  - Test videos (always)
+  - Cucumber JSON reports (always)
+- **Node.js caching** for faster builds
+- **Test summaries** in GitHub Actions UI
+
+### Setup Instructions
+
+1. **Ensure the workflow file exists**:
+   - `.github/workflows/cypress-tests.yml` should be present in your repository
+
+2. **Configure services** (if needed):
+   - If your tests require the Frontend/Backend to be running, you have several options:
+     - **Option A**: Uncomment and configure the service setup steps in the workflow (if QBrain repo is in a parent directory)
+     - **Option B**: Use service containers in the workflow (Docker)
+     - **Option C**: Run tests against a deployed staging environment
+     - **Option D**: Use `cypress run --config baseUrl=<staging-url>` to point to a remote environment
+   - Update paths, environment variables, and commands to match your setup
+
+3. **Optional: Cypress Dashboard**:
+   - To record tests to Cypress Dashboard, uncomment the `record` option
+   - Add `CYPRESS_RECORD_KEY` to your repository secrets
+   - Add your project ID to the workflow configuration
+
+4. **Optional: Multi-browser testing**:
+   - Uncomment the `cypress-run-matrix` job to run tests on multiple browsers (Chrome, Firefox, Edge)
+
+### Viewing Test Results
+
+- **GitHub Actions**: Navigate to the "Actions" tab in your repository to view workflow runs
+- **Artifacts**: Download test videos, screenshots, and reports from the workflow run page
+- **Test Summary**: View a summary in the workflow run output
+
+### Local CI/CD Testing
+
+To test the CI/CD workflow locally, you can use [act](https://github.com/nektos/act):
+
+```bash
+# Install act (macOS)
+brew install act
+
+# Run the workflow locally
+act -j cypress-run
+```
+
 ## 🐛 Troubleshooting
 
 ### Tests failing due to timing
@@ -260,6 +333,27 @@ Cucumber JSON reports are generated in `cypress/cucumber-json/` after test execu
 - Ensure test user exists in the database
 - Clear cookies/localStorage between tests
 - Use custom `login` command for consistency
+
+### Git push rejected due to large files
+If you encounter errors about large files when pushing to GitHub:
+1. **Check `.gitignore`**: Ensure large test files are listed in `.gitignore`
+2. **Remove from Git history**: If files were already committed, remove them from history:
+   ```bash
+   git filter-branch --force --index-filter \
+     "git rm --cached --ignore-unmatch cypress/fixtures/files/LARGE_FILE.pdf" \
+     --prune-empty --tag-name-filter cat -- --all
+   ```
+3. **Clean up**: After removing files, clean Git references:
+   ```bash
+   rm -rf .git/refs/original/
+   git reflog expire --expire=now --all
+   git gc --prune=now --aggressive
+   ```
+4. **Force push**: Push the cleaned history (only if safe to do so):
+   ```bash
+   git push -u origin main --force
+   ```
+   ⚠️ **Warning**: Only force push if you're sure no one else has pulled the repository yet.
 
 ## 📚 Resources
 
