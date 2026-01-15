@@ -4,6 +4,10 @@ cypress/screenshots/
 cypress/downloads/
 cypress/cucumber-json/
 
+# Large test files (exceed GitHub file size limits)
+cypress/fixtures/files/50MB-TESTFILE.ORG.pdf
+cypress/fixtures/files/100MB-TESTFILE.ORG.pdf
+
 # Dependencies
 node_modules/
 
