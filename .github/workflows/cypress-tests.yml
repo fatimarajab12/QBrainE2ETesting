@@ -81,14 +81,19 @@ jobs:
           record: false # Set to true and add CYPRESS_RECORD_KEY if using Cypress Dashboard
           # record-key: ${{ secrets.CYPRESS_RECORD_KEY }}
           # project-id: your-project-id
-          # IMPORTANT: Configure one of the following:
+          # IMPORTANT: Configure based on your setup:
           # Option 1: If services are started in steps above, uncomment to wait for them:
           # wait-on: 'http://localhost:8080'
           # wait-on-timeout: 120
+          # start: 'npm start'  # Command to start your server (if needed)
           #
-          # Option 2: If testing against remote/staging environment, keep start: false
-          # and set CYPRESS_BASE_URL environment variable (see comment below)
-          start: false
+          # Option 2: If testing against remote/staging environment:
+          # Omit 'start' and 'wait-on' parameters, override baseUrl using config:
+          # config: baseUrl=https://your-staging-url.com
+          #
+          # Option 3: Skip baseUrl verification temporarily (tests will still fail without server):
+          # Uncomment the line below to disable baseUrl check:
+          # config: baseUrl=
         # To add environment variables, uncomment the 'env:' block below and add your variables:
         # env:
         #   # For local services: baseUrl from cypress.config.js will be used (http://localhost:8080)
