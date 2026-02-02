@@ -1,10 +1,7 @@
 /// <reference types="cypress" />
 import BasePage from '../common/BasePage';
 
-/**
- * Login Page Object
- * Contains all locators and methods for the Login page
- */
+
 class LoginPage extends BasePage {
   // Locators
   getEmailInput() {
@@ -18,8 +15,6 @@ class LoginPage extends BasePage {
   }
 
   getLoginButton() {
-    // Use form submit button - LoadingButton renders as button[type="submit"]
-    // The text is "Sign In" but we use form selector for reliability
     return cy.get('form').find('button[type="submit"]').first();
   }
 
@@ -32,10 +27,6 @@ class LoginPage extends BasePage {
   }
 
   getErrorMessage() {
-    // Error message appears in form as a div with text-destructive class
-    // Structure: <div className="p-4 bg-destructive/10 text-destructive text-sm ...">
-    // The error text is inside a flex container
-    // Use more flexible selector to match the actual DOM structure
     return cy.get('form').find('.text-destructive').filter(':not([role])').first();
   }
   

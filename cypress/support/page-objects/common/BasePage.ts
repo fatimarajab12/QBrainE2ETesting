@@ -10,10 +10,6 @@ class BasePage {
   }
 
   getToastNotification() {
-    // Toast notifications use Radix UI Toast (Radix UI) with data-state="open"
-    // Toast notifications also use Sonner (alternative toast library)
-    // Radix UI Toast uses: [data-state="open"]
-    // Sonner uses: [data-sonner-toast] or [role="status"]
     return cy.get('[data-state="open"], [data-sonner-toast], [role="status"]').first();
   }
 

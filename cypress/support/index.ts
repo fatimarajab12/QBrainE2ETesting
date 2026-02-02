@@ -22,11 +22,3 @@ Cypress.on('uncaught:exception', (err, runnable) => {
   return true;
 });
 
-// Log Cypress events (optional, for debugging)
-// Note: cy.log() cannot be used in event handlers, use console.log instead if needed
-// Cypress.on('test:before:run', (attributes) => {
-//   console.log(`Running test: ${attributes.title}`);
-// });
-
-// Set default timeout for commands (if needed)
-// Cypress.config('defaultCommandTimeout', 10000);
